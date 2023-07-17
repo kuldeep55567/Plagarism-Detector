@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plagiarism Detector</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
+    integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+</head>
+<body>
+    <div id="main">
+        <h1>Score 3 points to pass the Test</h1>
+    <button type="button" onclick="startQuiz()" class="btn btn-danger">Start Test</button>
+</div>
+<div class="record">
+    <div id="webcam-container"></div>
+    <div id="label-container"></div>
+</div>
+    <div id="quiz-container" style="display: none;">
+        <h2 id="question"></h2>
+        <div id="options"></div>
+        <!-- <button type="button" onclick="submitAnswer()">Submit</button> -->
+        <p id="result"></p>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <script type="text/javascript">
+        const URL = "https://teachablemachine.withgoogle.com/models/BiP9gAD7v/";
+        let model, webcam, labelContainer, maxPredictions;
+        const questions = [
+            {
+                question: "Question 1: What is the capital of France?",
+                options: ["Paris", "London", "Berlin"],
+                answer: "Paris"
+            },
+            {
+                question: "Question 2: Which planet is known as the Red Planet?",
+                options: ["Mars", "Jupiter", "Venus"],
+                answer: "Mars"
+            },
+            {
+                question: "Question 3: What is the chemical symbol for gold?",
+                options: ["Au", "Ag", "Fe"],
+                answer: "Au"
+            },
+            {
+                question: "Question 4: Who painted the Mona Lisa?",
+                options: ["Leonardo da Vinci", "Pablo Picasso", "Vincent van Gogh"],
+                answer: "Leonardo da Vinci"
+            },
+            {
+                question: "Question 5: What is the tallest mountain in the world?",
+                options: ["Mount Everest", "K2", "Kangchenjunga"],
+                answer: "Mount Everest"
+            }
+        ];
+        let currentQuestion = 0;
+        let score = 0;
+        let phoneDetectedCount = 0;
+        let lookingOutsideCount = 0;
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+            const flip = true;
+            webcam = new tmImage.Webcam(200, 200, flip);
+            await webcam.setup();
+            await webcam.play();
+            window.requestAnimationFrame(loop);
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
+            labelContainer = document.getElementById("label-container");
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.appendChild(document.createElement("div"));
+            }
+        }
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+        let phoneDetectedFlag = false;
+        let lookingOutsideFlag = false;
+
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+            labelContainer.innerHTML = ""; // Clear previous label predictions
+
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction =
+                    prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                labelContainer.appendChild(document.createTextNode(classPrediction));
+                labelContainer.appendChild(document.createElement("br"));
+
+                if (prediction[i].probability >= 1) {
+                    if (prediction[i].className === "Phone Detector") {
+                        if (!phoneDetectedFlag) {
+                            phoneDetectedCount++;
+                            phoneDetectedFlag = true;
+                        }
+                    } else if (prediction[i].className === "Looking Outside") {
+                        if (!lookingOutsideFlag) {
+                            lookingOutsideCount++;
+                            lookingOutsideFlag = true;
+                        }
+                    }
+                } else {
+                    if (prediction[i].className === "Phone Detector") {
+                        phoneDetectedFlag = false;
+                    } else if (prediction[i].className === "Looking Outside") {
+                        lookingOutsideFlag = false;
+                    }
+                }
+            }
+        }
+
+        function startQuiz() {
+            document.getElementById("quiz-container").style.display = "block";
+            document.getElementById("question").textContent = questions[currentQuestion].question;
+            const optionsContainer = document.getElementById("options");
+            optionsContainer.innerHTML = "";
+            for (let i = 0; i < questions[currentQuestion].options.length; i++) {
+                const option = document.createElement("button");
+                option.classList.add("optionss")
+                option.textContent = questions[currentQuestion].options[i];
+                option.onclick = selectOption;
+                optionsContainer.appendChild(option);
+            }
+        }
+
+        function selectOption(event) {
+            const selectedOption = event.target.textContent;
+            const correctAnswer = questions[currentQuestion].answer;
+            if (selectedOption === correctAnswer) {
+                score++;
+            }
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                document.getElementById("question").textContent = questions[currentQuestion].question;
+                const optionsContainer = document.getElementById("options");
+                optionsContainer.innerHTML = "";
+                for (let i = 0; i < questions[currentQuestion].options.length; i++) {
+                    const option = document.createElement("button");
+                    option.classList.add("optionss")
+                    option.textContent = questions[currentQuestion].options[i];
+                    option.onclick = selectOption;
+                    optionsContainer.appendChild(option);
+                }
+            } else {
+                showResult();
+            }
+        }
+
+        function showResult() {
+            const resultContainer = document.getElementById("result");
+            resultContainer.innerHTML = "You scored " + score + " out of " + questions.length + "!<br>";
+            resultContainer.innerHTML += "Plagiarism Status:<br>";
+            resultContainer.innerHTML += "Phone detected " + phoneDetectedCount + " time(s).<br>";
+            resultContainer.innerHTML += "Looked outside " + lookingOutsideCount + " time(s).";
+        }
+
+        function submitAnswer() {
+            document.getElementById("webcam-container").style.display = "none";
+            document.getElementById("label-container").style.display = "none";
+            document.getElementById("quiz-container").style.display = "none";
+            document.getElementById("result").style.display = "block";
+
+            const prediction = model.predict(webcam.canvas);
+            const selectedLabel = prediction[0].className;
+            if (selectedLabel === "Normal") {
+                document.getElementById("result").textContent = "You are normal.";
+            } else if (selectedLabel === "Looking Outside") {
+                document.getElementById("result").textContent = "You are looking outside the screen.";
+            } else if (selectedLabel === "Using Phone") {
+                document.getElementById("result").textContent = "You are using a phone.";
+            } else {
+                document.getElementById("result").textContent = "Unknown label detected.";
+            }
+        }
+    </script>
+    <script type="text/javascript">
+        init(); // Start the video on page load
+    </script>
+</body>
+
+</html>

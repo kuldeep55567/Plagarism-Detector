@@ -1,0 +1,85 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  
+  #webcam-container {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 10px;
+  }
+  
+  #label-container div {
+    margin-bottom: 5px;
+  }
+  #login-form,
+#signup-form {
+    width: 60%;
+    margin: auto;
+    text-align: center;
+    margin-top: 100px;
+}
+input {
+    width: 350px;
+    height: 45px;
+    border-radius: 5px;
+}
+
+::placeholder {
+    font-size: 25px;
+}
+
+.tag {
+    font-size: 50px;
+    text-align: center;
+}
+
+#login-form button,
+#signup-form button {
+    margin-top: 20px;
+}
+#main{
+  width: 80%;
+  margin: auto;
+  text-align: center;
+}
+#main button{
+  margin-top: 50px;
+  font-size: 25px;
+}
+#webcam-container{
+margin-right: 50px;
+}
+.record{
+  display: flex;
+  width: 80%;
+  margin: auto;
+  justify-content: center;
+  align-items: center;
+  margin-top: 50px
+}
+#quiz-container{
+  width: 80%;
+  margin: auto;
+}
+.optionss{
+  padding-inline: 20px;
+ margin-inline: 30px;
+}
+.optionss{
+  border-radius: 5px;
+  color: rgb(255, 255, 255);
+  background-color: rgb(63, 193, 245);
+  font-size: 20px;
+  font-weight: 600;
+  border: none;
+}
+#result{
+  font-size: 24px;
+  width: 60%;
+  margin: auto;
+  margin-top: 100px;
+}
